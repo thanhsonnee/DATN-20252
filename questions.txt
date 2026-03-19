@@ -1,0 +1,50 @@
+1. (chưa hỏi) ừm, file code của bạn 
+có tạo được instance nhỏ hơn cho các file khác, ví dụ ber-n100-3, hoặc poa-n100-1 trong n100 không?
+hay tạo được instance nhỏ hơn cho file trong n1000 không?
+
+đây là flow thuật toán hiện tại của tôi
+(1) Initial feasible solution – construction.py
+builder theo request:
+greedy insertion
+regret‑k insertion
+optional: nearest‑neighbor / sweep theo request. (chưa có trong code, chưa triển khai, ưu tiên chạy nhanh đến bước cuối đã)
+luôn trả về Solution feasible (precedence, capacity, TW).
+(2) Main loop (ALNS) – alns/runner.py
+quản lý 3 stage theo time limit:
+Stage 1: destroy to 15–30% request, acceptance thoáng.
+Stage 2: 10–25%, LS mạnh hơn.
+Stage 3: 5–15%, LS mạnh, bật SP/F&O.
+(3) Destroy operators – alns/operators_destroy.py
+random, shaw/related, worst, (route/cluster optional).
+làm việc trên level request.
+(4) Repair operators – alns/operators_repair.py
+regret‑k insertion (pickup → delivery)
+greedy + nhẹ nhàng eject 1–2 request nếu kẹt.
+(5) Local search + mini‑repair – alns/local_search.py
+relocate / swap request, Or-opt block, 2‑opt* (nếu định nghĩa rõ).
+mini‑repair bản đầu (theo bạn yêu cầu):
+chỉ:
+sửa precedence (nếu operator lỡ phá thứ tự),
+sửa time feasibility bằng propagation,
+không làm split route, trick phức tạp.
+(6) Adaptive penalty – alns/penalty.py
+objective:
+cost + λ_TW * viol_TW + λ_C * viol_capacity
+precedence hard (không cho violate, hoặc bị loại ngay).
+update λ theo tỉ lệ feasible gần đây (cửa sổ iteration).
+(7) Exact layer (SP) – exact/set_partitioning.py
+RoutePool lưu route feasible “tốt”.
+Định kỳ xây mô hình SP:
+biến = chọn / không chọn route,
+ràng buộc: mỗi request được phục vụ đúng 1 lần,
+solve bằng MILP solver (vd pulp, ortools) – sau này ta chọn cụ thể.
+Solution SP → incumbent mới → tiếp tục ALNS/LS.
+(8) Optional Fix‑and‑Optimize – exact/fix_and_optimize.py
+chỉ dùng Stage 3, bonus.
+(9) Output – io/writer_*.py
+ghi solution đúng format Sartori / Li&Lim / Ropke‑Cordeau,
+main.py sẽ:
+nhận --instance, --dataset-type, --time-limit, --output,
+gọi parser → solver → writer.
+
+hãy cho biết dự án này của tôi đang chạy đến giai đoạn nào của flow thuật toán trên?

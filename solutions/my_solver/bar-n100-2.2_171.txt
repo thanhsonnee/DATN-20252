@@ -1,0 +1,7 @@
+Instance name : bar-n100-2
+Authors       : Thanh Son
+Date          : 2026-03-12
+Reference     : Thanh Son PDPTW Solver
+Solution
+Route 1 : 3 13 5 15 8 6 2 16 12 7 17 9 19 4 18 1 14 11
+Route 2 : 10 20
