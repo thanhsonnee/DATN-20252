@@ -1,20 +1,11 @@
-# PDPTW Solver and Logistics Web Application
-
-Đây là dự án phục vụ thực thi, đánh giá và quản trị các bộ giải cho bài toán định tuyến pickup-delivery có khung thời gian, trọng tâm là **PDPTW** (Pickup and Delivery Problem with Time Windows) và một số biến thể VRP liên quan.
+Đề tài: Phát triển công cụ hỗ trợ thực thi và đánh giá các bộ giải cho bài toán định tuyến đa phương tiện trên nhiều bộ dữ liệu khác nhau
 
 Repo hiện bao gồm:
 
-- Solver Python tự xây dựng cho PDPTW.
-- Web backend FastAPI để quản lý instance, job, solution, fleet, orders và users.
-- Frontend React/Vite để thao tác, chạy solver và xem kết quả.
-- Bộ dữ liệu benchmark, nghiệm tham chiếu, validator và visualizer.
-- Cơ chế plugin để tích hợp thêm solver/biến thể ngoài.
-
-Mục tiêu tối ưu chính của solver:
-
-1. Giảm số xe hoặc số route.
-2. Nếu cùng số route, giảm tổng cost/thời gian/quãng đường.
-3. Giữ nghiệm thỏa các ràng buộc pickup-delivery: precedence, capacity và time windows.
+- Solver chứa các thuật toán
+- Web backend FastAPI để quản lý instance, job, solution và users.
+- Frontend React/Vite để thao tác, chạy bộ giải (solver) và xem kết quả.
+- Bộ dữ liệu benchmark, best known solution tham chiếu cho 1 số bộ dữ liệu, validator và visualizer.
 
 ## Cấu Trúc Dự Án
 
@@ -46,20 +37,7 @@ Thư mục `solver/` là phần giải thuật chính:
 - `alns/`: ALNS runner, destroy/repair operators, acceptance, local search, penalty.
 - `exact/`: set partitioning và fix-and-optimize.
 - `io/`: writer xuất solution theo từng dataset format.
-- `plugins/`: tích hợp các solver/biến thể ngoài như 2E-VRP, 2E-VRPTWSPD, 2-echelon synchronization, math-pdptw.
-
-Pipeline tổng quát:
-
-```text
-instance file
-  -> parser
-  -> internal Instance
-  -> preprocess
-  -> construction
-  -> ALNS/local search/post-process
-  -> writer
-  -> solution file
-```
+- `plugins/`: tích hợp các folder thuật toán khác nhau đã cài đặt được: 2E-VRP, 2E-VRPTWSPD, 2-echelon synchronization, math-pdptw.
 
 ## Web Application
 
@@ -80,14 +58,8 @@ Frontend nằm trong `frontend/`, dùng:
 - React Leaflet/OpenStreetMap
 - Recharts
 
-Các chức năng web chính:
-
-- Đăng nhập, đăng ký, phân quyền.
-- Quản lý users, fleet, orders.
-- Chọn instance và tạo solver job.
-- Theo dõi trạng thái job.
-- Xem solution bằng bảng, metrics và bản đồ.
-- So sánh kết quả và phân tích thuật toán/plugin.
+Sản phẩm kỳ vọng
+Website hỗ trợ người dùng thực thi và đánh giá thuật toán tối ưu
 
 ## Datasets
 
@@ -227,44 +199,13 @@ Build production:
 npm run build
 ```
 
-## API Chính
+Các role người dùng: 
+- role 1: Người chạy thuật toán
+- role 2: Người đề xuất dataset mới
+- role 3: Người đề xuất các độ đo mới cho thuật toán
+- role 4: Admin
 
-```text
-POST             /auth/login
-
-GET/POST         /users/
-GET              /users/me
-PATCH/DELETE     /users/{id}
-
-GET/POST         /fleet/
-PATCH/DELETE     /fleet/{id}
-
-GET              /instances/
-GET              /instances/{name}
-
-POST             /jobs/
-GET              /jobs/
-GET/DELETE       /jobs/{id}
-
-GET              /solutions/
-GET              /solutions/{id}
-GET              /solutions/by-job/{job_id}
-
-GET/POST         /orders/
-GET/PATCH/DELETE /orders/{id}
-```
-
-Repo còn có API mở rộng cho algorithms, metrics, upload analysis và variants.
-
-## Vai Trò Người Dùng
-
-| Role | Quyền chính |
-| --- | --- |
-| Quản lý | Toàn quyền với users, fleet, jobs, solutions, orders |
-| Điều phối viên | Quản lý fleet, jobs, solutions, orders |
-| Khách hàng | Tạo và xem đơn của chính mình |
-
-## Git Hygiene
+## Git
 
 Nên commit:
 
@@ -284,14 +225,7 @@ Không nên commit:
 
 ## Tài Liệu Liên Quan
 
-- `README_SOLVER.md`: mô tả sâu hơn về thuật toán, parser, ALNS và hướng phát triển solver.
-- `README_WEB.md`: mô tả stack web, quick start và API.
+- `README_SOLVER.md`: mô tả sâu hơn về thuật toán ALNS và hướng phát triển solver.
+- `README_WEB.md`: mô tả web, cách chạy và API.
 - `instances/README.md`: thông tin dataset Sartori gốc và cách tải dữ liệu.
 - `instances/sartori-dataset/README_sartori.md`: mô tả bộ Sartori.
-
-## Hướng Phát Triển
-
-- Chuẩn hóa plugin interface để thêm solver ngoài dễ hơn.
-- Hoàn thiện benchmark runner hàng loạt và báo cáo so sánh tự động.
-- Bổ sung exact layer mạnh hơn: route pool, set partitioning, fix-and-optimize.
-- Tích hợp geocoding/GPS/driver app cho bài toán vận hành thực tế.
