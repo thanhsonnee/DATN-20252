@@ -6,7 +6,7 @@ from __future__ import annotations
 from typing import Dict, List, Optional, Tuple
 
 from solver.constraints import check_route_feasible
-from solver.construction import ROUTE_PENALTY, _best_insertion, _insert_nodes, apply_insertion
+from solver.construction import ROUTE_PENALTY, _best_insertion, apply_insertion
 from solver.models import Instance, Request, Route, Solution
 
 
@@ -45,6 +45,11 @@ def _remove_request(route: Route, req: Request) -> None:
         return
     p, d = req.pickup_node, req.delivery_node
     route.stops = [n for n in route.stops if n != p and n != d]
+
+
+def _insert_nodes(stops: List[int], pickup: int, delivery: int, pi: int, di: int) -> List[int]:
+    after_pick = list(stops[:pi]) + [pickup] + list(stops[pi:])
+    return list(after_pick[:di]) + [delivery] + list(after_pick[di:])
 
 
 def _sample_insertion_options(

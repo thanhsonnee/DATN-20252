@@ -1,148 +1,142 @@
 # PDPTW Solver and Logistics Web Application
 
-Dự án này là một hệ thống thực thi và đánh giá các bộ giải cho bài toán định tuyến đa phương tiện, tập trung vào **PDPTW** (Pickup and Delivery Problem with Time Windows) và các biến thể liên quan. Repo bao gồm solver Python, ứng dụng web quản trị, dữ liệu benchmark, nghiệm tham chiếu, công cụ validate và visualize.
+Đây là dự án phục vụ thực thi, đánh giá và quản trị các bộ giải cho bài toán định tuyến pickup-delivery có khung thời gian, trọng tâm là **PDPTW** (Pickup and Delivery Problem with Time Windows) và một số biến thể VRP liên quan.
 
-Mục tiêu chính:
+Repo hiện bao gồm:
 
-- Tối ưu tuyến pickup-delivery cho đội xe với ràng buộc time window, capacity và precedence.
-- Ưu tiên giảm số xe/số route, sau đó giảm tổng cost hoặc tổng thời gian/quãng đường.
-- Hỗ trợ chạy benchmark trên nhiều bộ dữ liệu chuẩn như Sartori, Li & Lim, Ropke-Cordeau.
-- Cung cấp web app để quản lý instance, fleet, orders, jobs, solutions và so sánh kết quả solver.
-- Mở rộng được bằng plugin cho các biến thể VRP/PDPTW khác.
+- Solver Python tự xây dựng cho PDPTW.
+- Web backend FastAPI để quản lý instance, job, solution, fleet, orders và users.
+- Frontend React/Vite để thao tác, chạy solver và xem kết quả.
+- Bộ dữ liệu benchmark, nghiệm tham chiếu, validator và visualizer.
+- Cơ chế plugin để tích hợp thêm solver/biến thể ngoài.
 
-## Tổng Quan Kiến Trúc
+Mục tiêu tối ưu chính của solver:
+
+1. Giảm số xe hoặc số route.
+2. Nếu cùng số route, giảm tổng cost/thời gian/quãng đường.
+3. Giữ nghiệm thỏa các ràng buộc pickup-delivery: precedence, capacity và time windows.
+
+## Cấu Trúc Dự Án
 
 ```text
 .
-├── run.py                 # CLI chạy solver nhanh từ root
-├── solver/                # Solver core, parser, ALNS, exact layer, plugins
-├── backend/               # FastAPI backend, database, auth, API, solver service
-├── frontend/              # React + TypeScript + Vite web app
-├── instances/             # Benchmark instances và metadata
-├── solutions/             # Nghiệm tham chiếu và nghiệm do solver sinh ra
-├── validator/             # Công cụ kiểm tra nghiệm
-├── visualizer/            # Công cụ visualize instance/solution
-├── tools/                 # Script/phụ trợ cho xử lý dữ liệu
-├── database_design.sql    # Thiết kế CSDL tham khảo
-└── README_SOLVER.md       # Tài liệu chi tiết phần solver
+├── run.py                  # CLI chạy solver nhanh từ root
+├── solver/                 # Solver core, parser, ALNS, exact layer, plugins
+├── backend/                # FastAPI backend + SQLAlchemy + solver service
+├── frontend/               # React 18 + TypeScript + Vite + Tailwind CSS
+├── instances/              # Benchmark instances và tài liệu dataset
+├── solutions/              # Best known/candidate solutions và output mẫu
+├── validator/              # Công cụ kiểm tra nghiệm
+├── visualizer/             # Công cụ visualize instance/solution
+├── tools/                  # Script hỗ trợ xử lý dữ liệu
+├── database_design.sql     # Thiết kế CSDL tham khảo
+├── README_SOLVER.md        # Ghi chú chi tiết về solver
+└── README_WEB.md           # Ghi chú chi tiết về web app
 ```
 
-## Thành Phần Chính
+## Solver Core
 
-### Solver Core
+Thư mục `solver/` là phần giải thuật chính:
 
-Thư mục `solver/` chứa phần giải thuật chính:
-
-- `models.py`: mô hình nội bộ gồm `Node`, `Request`, `Route`, `Solution`, `Instance`.
-- `parsers/`: đọc các format Sartori, Li & Lim, Ropke-Cordeau và một số biến thể two-echelon.
-- `construction.py`: xây nghiệm ban đầu bằng `greedy`, `regret`, `sweep`, `best`.
-- `constraints.py`: kiểm tra ràng buộc time window, capacity, precedence.
+- `models.py`: model nội bộ `Node`, `Request`, `Route`, `Solution`, `Instance`.
+- `parsers/`: parser cho Sartori, Li & Lim, Ropke-Cordeau và two-echelon variants.
+- `construction.py`: tạo nghiệm ban đầu bằng `greedy`, `regret`, `sweep`, `best`.
+- `constraints.py`: kiểm tra feasibility.
 - `preprocess.py`: tiền xử lý và quick feasibility check.
-- `alns/`: ALNS, destroy/repair operators, simulated annealing, local search, penalty.
+- `alns/`: ALNS runner, destroy/repair operators, acceptance, local search, penalty.
 - `exact/`: set partitioning và fix-and-optimize.
-- `io/`: writer xuất nghiệm cho Sartori, Li & Lim, Ropke-Cordeau.
-- `plugins/`: tích hợp solver/biến thể ngoài như 2E-VRP, 2E-VRPTWSPD, 2-echelon synchronization, math-pdptw.
+- `io/`: writer xuất solution theo từng dataset format.
+- `plugins/`: tích hợp các solver/biến thể ngoài như 2E-VRP, 2E-VRPTWSPD, 2-echelon synchronization, math-pdptw.
 
-Pipeline solver tổng quát:
+Pipeline tổng quát:
 
 ```text
 instance file
   -> parser
   -> internal Instance
-  -> preprocess + quick feasibility
-  -> construction initial solution
-  -> ALNS + local search + post-process
+  -> preprocess
+  -> construction
+  -> ALNS/local search/post-process
   -> writer
   -> solution file
 ```
 
-### Backend
+## Web Application
 
-Thư mục `backend/` là API server dùng **FastAPI + SQLAlchemy**:
+Backend nằm trong `backend/`, dùng:
 
-- Auth JWT và phân quyền người dùng.
-- API quản lý users, fleet, orders, instances, jobs, solutions.
-- Job solver chạy nền và lưu kết quả vào database.
-- API upload/analyze thuật toán và metrics.
-- Tích hợp service gọi solver Python trong repo.
+- FastAPI
+- SQLAlchemy
+- JWT auth
+- Pydantic
+- SQLite/PostgreSQL tùy cấu hình môi trường
 
-Các router chính nằm trong `backend/app/routers/`:
+Frontend nằm trong `frontend/`, dùng:
 
-```text
-auth.py
-users.py
-fleet.py
-orders.py
-instances.py
-jobs.py
-solutions.py
-algorithms_api.py
-metrics_api.py
-upload_analyze.py
-variants.py
-```
+- React 18
+- TypeScript
+- Vite
+- Tailwind CSS
+- React Leaflet/OpenStreetMap
+- Recharts
 
-### Frontend
+Các chức năng web chính:
 
-Thư mục `frontend/` là web app dùng **React 18 + TypeScript + Vite + Tailwind CSS**:
+- Đăng nhập, đăng ký, phân quyền.
+- Quản lý users, fleet, orders.
+- Chọn instance và tạo solver job.
+- Theo dõi trạng thái job.
+- Xem solution bằng bảng, metrics và bản đồ.
+- So sánh kết quả và phân tích thuật toán/plugin.
 
-- Đăng nhập, đăng ký, xác thực email.
-- Dashboard tổng quan.
-- Quản lý instance, job, solution, fleet, user, order.
-- Xem chi tiết solution bằng bảng và bản đồ Leaflet/OpenStreetMap.
-- So sánh nghiệm và xem metrics.
-- Upload thuật toán/plugin và phân tích kết quả.
+## Datasets
 
-Các trang chính nằm trong `frontend/src/pages/`.
+Các bộ dữ liệu chính nằm trong `instances/`:
 
-### Datasets
-
-Thư mục `instances/` chứa hoặc tham chiếu các bộ dữ liệu:
-
-- `instances/sartori-dataset/`: Sartori PDPTW, travel time từ OSRM, có thể bất đối xứng.
-- `instances/lilim-dataset/`: Li & Lim PDPTW, tọa độ Euclid.
+- `instances/sartori-dataset/`: PDPTW Sartori, travel time lấy từ OSRM theo mạng đường thực tế, có thể bất đối xứng.
+- `instances/lilim-dataset/`: Li & Lim PDPTW, travel time tính từ tọa độ Euclid.
 - `instances/ropke-cordeau-dataset/`: Ropke-Cordeau PDPTW, `EXACT_2D`.
-- `instances/2e-vrp-pdd-main/`, `instances/2E-EVRP-Instances-2/`: dữ liệu cho các biến thể two-echelon/electric VRP.
+- `instances/2E-EVRP-Instances-2/` và `instances/2e-vrp-pdd-main/`: dữ liệu cho các biến thể two-echelon/electric VRP.
 
-Với Sartori, các file đầy đủ có thể rất lớn vì chứa ma trận travel time. Xem thêm `instances/README.md` và `instances/sartori-dataset/README_sartori.md`.
+Một số dataset lớn không nên commit nếu chỉ là bản tải về tạm hoặc metadata sinh tự động. `.gitignore` đã chặn các file `*.meta.json`, `*.analysis.json` và các thư mục output/cache.
 
-### Solutions, Validator, Visualizer
+## Cài Đặt
 
-- `solutions/`: lưu nghiệm tham chiếu và nghiệm sinh bởi solver, trong đó `solutions/my_solver/` là output mặc định của `run.py`.
-- `validator/`: kiểm tra nghiệm có thỏa ràng buộc của instance hay không.
-- `visualizer/`: visualize instance và route trên bản đồ.
+Yêu cầu khuyến nghị:
 
-## Yêu Cầu Môi Trường
-
-- Python 3.11+ hoặc 3.12.
+- Python 3.11 hoặc 3.12.
 - Node.js 18+.
-- PostgreSQL nếu chạy backend với database ngoài.
-- Trên Windows có thể chạy trực tiếp bằng PowerShell.
+- PostgreSQL nếu muốn chạy backend với DB ngoài; SQLite có thể dùng cho local tùy `.env`.
 
-Backend dependencies nằm trong `backend/requirements.txt`.
-Frontend dependencies nằm trong `frontend/package.json`.
+Không commit các file môi trường hoặc dữ liệu local:
 
-## Chạy Solver Bằng CLI
+- `.env`
+- `*.db`
+- `frontend/node_modules/`
+- `__pycache__/`
+- `solutions/my_solver/`
 
-Từ thư mục root:
+## Chạy Solver Từ CLI
+
+Từ root dự án:
 
 ```powershell
 python run.py bar-n1000-3
 ```
 
-Chọn time limit, construction method và seed:
+Chạy với tham số rõ hơn:
 
 ```powershell
 python run.py bar-n1000-3 --method greedy --time-limit 60 --seed 0
 ```
 
-Chạy bằng đường dẫn file cụ thể:
+Chạy bằng đường dẫn file:
 
 ```powershell
 python run.py instances\sartori-dataset\n100\n100\bar-n100-1.txt --dataset-type sartori --time-limit 30
 ```
 
-Các `dataset-type` đang hỗ trợ:
+Các dataset type đang hỗ trợ:
 
 ```text
 sartori
@@ -150,7 +144,7 @@ lilim
 ropke_cordeau
 ```
 
-Các `method` đang hỗ trợ:
+Các construction method:
 
 ```text
 greedy
@@ -162,19 +156,19 @@ best
 Output mặc định:
 
 ```text
-solutions/my_solver/<instance>.<vehicles>_<cost>.txt
+solutions/my_solver/<instance>.<routes>_<cost>.txt
 ```
 
-## Validate Nghiệm
+## Validate Solution
 
 Ví dụ validate nghiệm Sartori:
 
 ```powershell
 cd validator
-python validator.py -s ..\solutions\my_solver\bar-n1000-3.<vehicles>_<cost>.txt -i ..\instances\sartori-dataset\n1000\n1000\bar-n1000-3.txt
+python validator.py -s ..\solutions\my_solver\bar-n1000-3.<routes>_<cost>.txt -i ..\instances\sartori-dataset\n1000\n1000\bar-n1000-3.txt
 ```
 
-Thay `<vehicles>_<cost>` bằng tên file output thực tế trong `solutions/my_solver/`.
+Thay `<routes>_<cost>` bằng tên file thực tế solver sinh ra.
 
 ## Chạy Backend
 
@@ -187,7 +181,7 @@ copy .env.example .env
 python run.py
 ```
 
-Backend mặc định chạy tại:
+Backend mặc định:
 
 ```text
 http://localhost:8000
@@ -199,13 +193,13 @@ API docs:
 http://localhost:8000/docs
 ```
 
-Seed dữ liệu demo lần đầu:
+Seed dữ liệu demo:
 
 ```powershell
 python app\db\seed.py
 ```
 
-Tài khoản demo:
+Demo accounts:
 
 | Email | Password | Role |
 | --- | --- | --- |
@@ -221,7 +215,7 @@ npm install
 npm run dev
 ```
 
-Frontend mặc định chạy tại:
+Frontend mặc định:
 
 ```text
 http://localhost:5173
@@ -236,31 +230,31 @@ npm run build
 ## API Chính
 
 ```text
-POST           /auth/login
+POST             /auth/login
 
-GET/POST       /users/
-GET            /users/me
-PATCH/DELETE   /users/{id}
+GET/POST         /users/
+GET              /users/me
+PATCH/DELETE     /users/{id}
 
-GET/POST       /fleet/
-PATCH/DELETE   /fleet/{id}
+GET/POST         /fleet/
+PATCH/DELETE     /fleet/{id}
 
-GET            /instances/
-GET            /instances/{name}
+GET              /instances/
+GET              /instances/{name}
 
-POST           /jobs/
-GET            /jobs/
-GET/DELETE     /jobs/{id}
+POST             /jobs/
+GET              /jobs/
+GET/DELETE       /jobs/{id}
 
-GET            /solutions/
-GET            /solutions/{id}
-GET            /solutions/by-job/{job_id}
+GET              /solutions/
+GET              /solutions/{id}
+GET              /solutions/by-job/{job_id}
 
-GET/POST       /orders/
+GET/POST         /orders/
 GET/PATCH/DELETE /orders/{id}
 ```
 
-Repo hiện có thêm các API mở rộng cho algorithms, metrics, upload analysis và variants.
+Repo còn có API mở rộng cho algorithms, metrics, upload analysis và variants.
 
 ## Vai Trò Người Dùng
 
@@ -270,35 +264,34 @@ Repo hiện có thêm các API mở rộng cho algorithms, metrics, upload analy
 | Điều phối viên | Quản lý fleet, jobs, solutions, orders |
 | Khách hàng | Tạo và xem đơn của chính mình |
 
-## Luồng Nghiệp Vụ Dự Kiến
+## Git Hygiene
 
-1. Khách hàng tạo đơn pickup-delivery với địa chỉ/toạ độ, demand và time window.
-2. Điều phối viên hoặc quản lý chọn tập đơn hoặc benchmark instance cần tối ưu.
-3. Backend tạo solver job và gọi solver.
-4. Solver đọc instance, xây nghiệm ban đầu, cải thiện bằng ALNS/local search và ghi solution.
-5. Backend lưu KPI, route, stop và trạng thái job.
-6. Frontend hiển thị kết quả bằng bảng, biểu đồ, bản đồ và metrics so sánh.
+Nên commit:
 
-## Định Dạng Travel Time
+- Source code trong `solver/`, `backend/app/`, `frontend/src/`.
+- File cấu hình cần thiết như `requirements.txt`, `package.json`, `package-lock.json`, `vite.config.ts`, `tailwind.config.js`.
+- Tài liệu: `README.md`, `README_SOLVER.md`, `README_WEB.md`, README dataset.
+- Dataset benchmark nhỏ/cần thiết cho tái lập kết quả.
+- Nghiệm tham chiếu trong `solutions/files-*` và `solutions/bks.dat`.
 
-| Dataset | Cách tính travel time |
-| --- | --- |
-| Sartori | Ma trận `EDGES` trong file, tính bằng OSRM theo mạng đường thực tế, có thể bất đối xứng |
-| Li & Lim | Khoảng cách Euclid từ tọa độ, thường `speed = 1` nên time = distance |
-| Ropke-Cordeau | `EXACT_2D`, khoảng cách Euclid |
+Không nên commit:
 
-## Ghi Chú Phát Triển
+- `.env`, database local, secret key.
+- `node_modules/`, `__pycache__/`, `.pyc`.
+- `solutions/my_solver/` vì đây là output chạy thử.
+- `*.meta.json`, `*.analysis.json` vì đây là metadata sinh tự động.
+- Output plugin, binary build, file log.
 
-- `README_SOLVER.md` mô tả chi tiết hơn về thuật toán và các module solver.
-- `README_WEB.md` mô tả nhanh stack web, account demo và API.
-- `run.py` ở root là entrypoint nhanh nhất để chạy solver độc lập.
-- Web backend gọi solver thông qua `backend/app/services/solver_service.py`.
-- Worktree hiện có nhiều dataset và artifact lớn; nên tránh commit `node_modules/`, cache Python, database local và output tạm.
+## Tài Liệu Liên Quan
 
-## Hướng Mở Rộng
+- `README_SOLVER.md`: mô tả sâu hơn về thuật toán, parser, ALNS và hướng phát triển solver.
+- `README_WEB.md`: mô tả stack web, quick start và API.
+- `instances/README.md`: thông tin dataset Sartori gốc và cách tải dữ liệu.
+- `instances/sartori-dataset/README_sartori.md`: mô tả bộ Sartori.
 
-- Chuẩn hóa thêm writer/validator cho các biến thể ngoài PDPTW cơ bản.
-- Hoàn thiện route pool, set partitioning và fix-and-optimize.
-- Bổ sung benchmark runner hàng loạt và báo cáo so sánh tự động.
-- Tích hợp geocoding, GPS/driver app và re-optimization theo thời gian thực.
-- Chuẩn hóa plugin interface cho các bộ giải bên ngoài.
+## Hướng Phát Triển
+
+- Chuẩn hóa plugin interface để thêm solver ngoài dễ hơn.
+- Hoàn thiện benchmark runner hàng loạt và báo cáo so sánh tự động.
+- Bổ sung exact layer mạnh hơn: route pool, set partitioning, fix-and-optimize.
+- Tích hợp geocoding/GPS/driver app cho bài toán vận hành thực tế.

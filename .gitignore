@@ -1,13 +1,13 @@
-# ── Python ────────────────────────────────────────────────────────────────────
+# Python cache/build
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
 .Python
 *.egg-info/
-dist/
-build/
 .eggs/
+build/
+dist/
 .venv/
 venv/
 env/
@@ -17,31 +17,29 @@ env/
 .coverage
 htmlcov/
 
-# ── Environment & secrets ─────────────────────────────────────────────────────
+# Environment, credentials, local config
 .env
 .env.*
 !.env.example
 *.key
 *.pem
+*.crt
+*.p12
+*.pfx
 
-# ── Database ──────────────────────────────────────────────────────────────────
+# Databases and local state
 *.db
 *.sqlite
 *.sqlite3
+*.db-journal
+*.sqlite-journal
 
-# ── Compiled binaries & C++ build artifacts ───────────────────────────────────
-*.exe
-*.o
-*.a
-*.out
-*.dll
-*.so
-
-# ── Frontend ──────────────────────────────────────────────────────────────────
+# Frontend dependencies/build output
 node_modules/
 frontend/node_modules/
 frontend/.vite/
 frontend/dist/
+frontend/build/
 frontend/.env
 frontend/.env.*
 !frontend/.env.example
@@ -50,39 +48,56 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# ── Generated solver output ───────────────────────────────────────────────────
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+validator/log.txt
+
+# Generated solver outputs
 solutions/my_solver/
 
-# ── Generated analysis / upload metadata ──────────────────────────────────────
-*.analysis.json
+# Generated analysis/upload metadata
 *.meta.json
+*.analysis.json
 
-# ── Validator logs ────────────────────────────────────────────────────────────
-validator/log.txt
-*.log
-
-# ── Submissions ───────────────────────────────────────────────────────────────
+# Submissions and large downloaded bundles
 submissions/*
-
-# ── Instances (large benchmark datasets — upload via UI instead) ──────────────
 instances/all/
+instances/instances/
 
-# ── Claude internal ───────────────────────────────────────────────────────────
-.claude/
-
-# ── Local cloned/extracted external solvers ───────────────────────────────────
+# Local cloned/extracted external solvers
 backend/math-pdptw/
 solver/plugins/_pending/
 
-# ── Plugin/generated result folders ───────────────────────────────────────────
+# Compiled binaries and native build artifacts
+*.exe
+*.o
+*.obj
+*.a
+*.lib
+*.out
+*.dll
+*.so
+*.dylib
+*.class
+*.jar
+
+# Plugin generated output
 solver/plugins/**/__pycache__/
+solver/plugins/**/out/
+solver/plugins/**/output/
 solver/plugins/**/Results/
 solver/plugins/**/ResultsJoint/
 solver/plugins/**/ResultsLBBD/
-solver/plugins/**/out/
-solver/plugins/**/output/
+solver/plugins/**/results/
+solver/plugins/**/files/output/
 
-# ── IDE & OS ──────────────────────────────────────────────────────────────────
+# Tool/editor/OS files
+.claude/
 .vscode/settings.json
 .idea/
 *.DS_Store
