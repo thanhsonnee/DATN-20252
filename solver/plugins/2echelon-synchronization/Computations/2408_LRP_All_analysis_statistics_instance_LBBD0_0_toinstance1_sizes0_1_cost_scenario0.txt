@@ -1,0 +1,1 @@
+C201.json	10	2eVRP	0.1	False	False	StreetLevel nofCars	1	Street Travel Time	212.27	212.27	AverageLoaded	29.77	Average PercentLoad	59.55	ModalShare	59.97	Minimum required nofTransfers	3	nofTransfersOptimal	4	Available nof Hubs	4	nof Used Hubs	2	Average Transfer Load	75.0	WaterLevel nofVessels	1	WaterTravelTime	141.68

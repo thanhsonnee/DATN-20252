@@ -27,9 +27,12 @@ DESTROY_STAGE2_MAX_FRAC = 0.25
 DESTROY_STAGE3_MIN_FRAC = 0.05
 DESTROY_STAGE3_MAX_FRAC = 0.15
 
-# Simulated annealing: initial temperature, cooling rate (temperature *= cooling per iteration).
-SA_INITIAL_TEMPERATURE = 1e4
-SA_COOLING = 0.9995
+# Simulated annealing – dynamic, time-based schedule.
+# T_initial = initial_solution_cost * SA_TEMP_FACTOR
+# T(t)      = T_initial * exp(log(SA_TEMP_MIN_RATIO) * t/time_limit)
+# → T goes from T_initial down to T_initial * SA_TEMP_MIN_RATIO over the run.
+SA_TEMP_FACTOR    = 0.05    # P(accept +5% worse move) ≈ 0.5 at t=0
+SA_TEMP_MIN_RATIO = 0.001   # T at end = 0.1% of T_initial
 
 # Local search (Stage 2/3 intensification)
 LS_STAGE2_MAX_MOVES = 20
@@ -58,3 +61,30 @@ REPAIR_ROUTE_SAMPLES = 10
 REPAIR_POS_TRIALS_PER_ROUTE = 28
 REPAIR_EJECTION_MAX = 2
 REPAIR_EJECTION_TRIES = 20
+
+# Local search move probabilities (must sum to 1.0)
+LS_P_RELOCATE = 0.50
+LS_P_SWAP = 0.30
+LS_P_OR_OPT = 0.20
+
+# Adaptive penalty (Phase 6)
+PENALTY_LAMBDA_INIT = 1.0
+PENALTY_LAMBDA_TW_INIT = 0.5    # initial λ for TW violations
+PENALTY_LAMBDA_CAP_INIT = 0.5   # initial λ for capacity violations
+PENALTY_TARGET_FEASIBLE = 0.50
+PENALTY_WINDOW_SIZE = 50
+PENALTY_UPDATE_FREQ = 50
+PENALTY_LAMBDA_MIN = 0.1
+PENALTY_LAMBDA_MAX = 20.0
+PENALTY_ADJUST_FACTOR = 1.2
+
+# Set Partitioning (Phase 7)
+SP_POOL_MAX_SIZE = 800          # max routes kept in RoutePool
+SP_TIME_LIMIT_SEC = 10.0        # MILP time limit per SP call
+SP_CALL_FREQ_ITER = 150         # call SP every N iterations (Stage 2+)
+
+# Fix-and-Optimize (Phase 8)
+FO_FIX_RATIO = 0.60             # fraction of routes to fix
+FO_LS_MAX_MOVES = 40            # local-search budget after re-insertion
+FO_CALL_FREQ_ITER = 300         # call F&O every N iterations (Stage 3 only)
+FO_NO_IMPROVE_THRESHOLD = 150   # also trigger F&O if no improvement for N iters

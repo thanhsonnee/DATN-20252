@@ -1,0 +1,17 @@
+Restricted license - for non-production use only - expires 2027-11-29
+Set parameter Presolve to value 0
+Set parameter TimeLimit to value 100
+relax sub started
+relax sub ended
+[[1, 52.599999999999994], [4, 39.51], [6, 54.4], [8, 20.34]]
+340.519
+new best solution, terminate BB
+340.519	332.715	0	196.09	166.85	185.379	177.575	
+an incumbent solution exists
+1
+master routing started
+332.71
+RebuildingTerminatedFalseStatus	2IncumbetFeasTrue
+11new incumbent to master problem	340.519
+best solution lower bound	332.715
+Global lower bound 	0

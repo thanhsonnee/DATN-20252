@@ -1,7 +1,90 @@
-validator/log.txt
-validator/__pycache__
-validator/*.pyc
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
+# ── Environment & secrets ─────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# ── Database ──────────────────────────────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+
+# ── Compiled binaries & C++ build artifacts ───────────────────────────────────
+*.exe
+*.o
+*.a
+*.out
+*.dll
+*.so
+
+# ── Frontend ──────────────────────────────────────────────────────────────────
+node_modules/
+frontend/node_modules/
+frontend/.vite/
+frontend/dist/
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ── Generated solver output ───────────────────────────────────────────────────
+solutions/my_solver/
+
+# ── Generated analysis / upload metadata ──────────────────────────────────────
+*.analysis.json
+*.meta.json
+
+# ── Validator logs ────────────────────────────────────────────────────────────
+validator/log.txt
+*.log
+
+# ── Submissions ───────────────────────────────────────────────────────────────
 submissions/*
 
-instances/all
+# ── Instances (large benchmark datasets — upload via UI instead) ──────────────
+instances/all/
+
+# ── Claude internal ───────────────────────────────────────────────────────────
+.claude/
+
+# ── Local cloned/extracted external solvers ───────────────────────────────────
+backend/math-pdptw/
+solver/plugins/_pending/
+
+# ── Plugin/generated result folders ───────────────────────────────────────────
+solver/plugins/**/__pycache__/
+solver/plugins/**/Results/
+solver/plugins/**/ResultsJoint/
+solver/plugins/**/ResultsLBBD/
+solver/plugins/**/out/
+solver/plugins/**/output/
+
+# ── IDE & OS ──────────────────────────────────────────────────────────────────
+.vscode/settings.json
+.idea/
+*.DS_Store
+Thumbs.db
+desktop.ini

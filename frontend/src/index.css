@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Leaflet map */
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  z-index: 1;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 3px;
+}
+
+/* Status badges */
+.badge-pending    { @apply bg-yellow-100 text-yellow-800; }
+.badge-running    { @apply bg-blue-100 text-blue-800; }
+.badge-done       { @apply bg-green-100 text-green-800; }
+.badge-failed     { @apply bg-red-100 text-red-800; }
+.badge-available  { @apply bg-green-100 text-green-800; }
+.badge-in_use     { @apply bg-blue-100 text-blue-800; }
+.badge-maintenance { @apply bg-orange-100 text-orange-800; }

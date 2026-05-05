@@ -1,0 +1,21 @@
+CXX = C:/MinGW/bin/g++.exe
+CXXFLAGS = -std=c++14 -O2 -I./include
+
+SRCS = main.cpp \
+       common/data.cpp \
+       common/operation.cpp \
+       common/perturb.cpp \
+       constructor/constructor.cpp \
+       ages/ages.cpp \
+       lns/lns.cpp \
+       algo/algorithm.cpp \
+       cplex/sppm.cpp \
+       validator/validator.cpp
+
+TARGET = math-pdptw.exe
+
+$(TARGET): $(SRCS)
+	$(CXX) $(CXXFLAGS) -o $(TARGET) $(SRCS)
+
+clean:
+	del $(TARGET)
