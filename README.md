@@ -17,7 +17,7 @@ Repo hiện bao gồm:
 ├── frontend/               # React 18 + TypeScript + Vite + Tailwind CSS
 ├── instances/              # Benchmark instances và tài liệu dataset
 ├── solutions/              # Best known/candidate solutions và output mẫu
-├── validator/              # Công cụ kiểm tra nghiệm
+├── validator/              # Công cụ kiểm tra nghiệm (hiện đang chỉ hỗ trợ cho dataset Sartori & Buriol)
 ├── visualizer/             # Công cụ visualize instance/solution
 ├── tools/                  # Script hỗ trợ xử lý dữ liệu
 ├── database_design.sql     # Thiết kế CSDL tham khảo
@@ -58,8 +58,30 @@ Frontend nằm trong `frontend/`, dùng:
 - React Leaflet/OpenStreetMap
 - Recharts
 
-Sản phẩm kỳ vọng
-Website hỗ trợ người dùng thực thi và đánh giá thuật toán tối ưu
+## Sản phẩm kỳ vọng:
+1. Website hỗ trợ người dùng thực thi và đánh giá thuật toán tối ưu
+Một ứng dụng web đóng vai trò là nền tảng quản lý và đánh giá các bộ giải cho bài toán VRP, cung cấp giao diện trực quan và môi trường thực thi thống nhất cho các nhà nghiên cứu.
+
+Các tính năng cốt lõi của hệ thống:
+- Quản lý biến thể và dữ liệu: Cho phép người dùng đề xuất các biến thể mới của bài toán VRP và upload các bộ dữ liệu (dataset benchmark hoặc dataset tự tạo).
+- Thực thi thuật toán: Người dùng có thể đăng tải mã nguồn thuật toán, cấu hình các tham số thực thi (time limit, seed) và điều kiện dừng phù hợp cho từng loại giải thuật
+- Hiển thị kết quả chạy thuật toán lên giao diện hệ thống
+- Cung cấp bảng và biểu đồ so sánh các kết quả định lượng giữa các lần chạy thuật toán khác nhau trên các bộ dữ liệu.
+- Xuất dữ liệu: Hỗ trợ xuất kết quả chạy thuật toán dưới dạng file Excel để phục vụ thống kê và báo cáo.
+- Tích hợp LLM Groq API để tự động nhận diện biến thể bài toán, ràng buộc, định dạng dữ liệu và bài báo tham chiếu khi người dùng upload dataset hoặc thuật toán mới.
+- Cho phép người dùng định nghĩa và tải lên các độ đo mới cho thuật toán.
+
+2. Dataset, thuật toán và các tiêu chí đánh giá thuật toán
+- Quy mô hệ thống: hỗ trợ tối thiểu 10 giải thuật, trực quan hóa kết quả chạy của tất cả các giải thuật và hỗ trợ so sánh chi tiết kết quả chạy các thuật toán trên các bộ dataset khác nhau trong cùng biến thể bài toán
+
+- Yêu cầu về sản phẩm: 
+  + Hệ thống cho phép cấu hình điều kiện dừng, thời gian dừng phù hợp với từng giải thuật (heuristic, exact...) để đảm bảo việc so sánh kết quả giữa các giải thuật là công bằng
+  + Hệ thống hỗ trợ thu gọn hoặc mở rộng tập ràng buộc giữa các thuật toán trong cùng một biến thể và đảm bảo các trường dữ liệu đầu vào nhất quán khi so sánh
+  + Tiêu chí đánh giá giải thuật được lựa chọn linh hoạt dựa trên bài toán và tập ràng buộc cụ thể đang xét
+  + Có thể xuất được kết quả chạy thuật toán dưới dạng file excel
+
+- Dữ liệu sử dụng:
+  + Sử dụng các bộ benchmark dataset chuẩn cho bài toán định tuyến: Li & Lim, Sartori & Buriol, và dữ liệu của biến thể 2E-VRP.
 
 ## Datasets
 
@@ -78,7 +100,7 @@ Yêu cầu khuyến nghị:
 
 - Python 3.11 hoặc 3.12.
 - Node.js 18+.
-- PostgreSQL nếu muốn chạy backend với DB ngoài; SQLite có thể dùng cho local tùy `.env`.
+- PostgreSQL version dự án sử dụng: postgres (PostgreSQL) 16.2
 
 Không commit các file môi trường hoặc dữ liệu local:
 
@@ -90,6 +112,7 @@ Không commit các file môi trường hoặc dữ liệu local:
 
 ## Chạy Solver Từ CLI
 
+1. Chạy thuật toán ALNS 
 Từ root dự án:
 
 ```powershell
@@ -108,12 +131,11 @@ Chạy bằng đường dẫn file:
 python run.py instances\sartori-dataset\n100\n100\bar-n100-1.txt --dataset-type sartori --time-limit 30
 ```
 
-Các dataset type đang hỗ trợ:
+Các dataset type thuật toán ALNS đang hỗ trợ:
 
 ```text
 sartori
 lilim
-ropke_cordeau
 ```
 
 Các construction method:
@@ -159,25 +181,11 @@ Backend mặc định:
 http://localhost:8000
 ```
 
-API docs:
-
-```text
-http://localhost:8000/docs
-```
-
 Seed dữ liệu demo:
 
 ```powershell
 python app\db\seed.py
 ```
-
-Demo accounts:
-
-| Email | Password | Role |
-| --- | --- | --- |
-| `manager@pdptw.vn` | `manager123` | Quản lý |
-| `dispatcher@pdptw.vn` | `dispatcher123` | Điều phối viên |
-| `customer@pdptw.vn` | `customer123` | Khách hàng |
 
 ## Chạy Frontend
 
