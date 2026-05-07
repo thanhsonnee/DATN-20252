@@ -697,7 +697,27 @@ def get_instance_content(
         content = target.read_text(encoding="utf-8")
     except Exception:
         raise HTTPException(status_code=422, detail="Cannot read file")
-    return {"path": path, "name": target.name, "content": content}
+
+    parse_report = _build_parse_report(target)
+    upload_meta = _read_meta(target)
+
+    return {
+        "path": path,
+        "name": target.name,
+        "content": content,
+        "metadata": {
+            "dataset_type": parse_report.get("dataset_type"),
+            "dataset_type_label": parse_report.get("dataset_type_label"),
+            "stats": parse_report.get("stats", {}),
+            "errors": parse_report.get("errors", []),
+            "warnings": parse_report.get("warnings", []),
+            "fields": parse_report.get("fields", []),
+            "visibility": upload_meta.get("visibility", "public"),
+            "uploaded_by": upload_meta.get("uploaded_by"),
+            "uploaded_by_email": upload_meta.get("uploaded_by_email"),
+            "uploaded_at": upload_meta.get("uploaded_at"),
+        },
+    }
 
 
 _SYSTEM_DATASET_FOLDERS = {"sartori-dataset", "lilim-dataset", "2e-vrp-pdd-main"}
