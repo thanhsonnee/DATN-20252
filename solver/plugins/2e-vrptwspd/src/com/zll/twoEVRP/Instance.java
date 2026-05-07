@@ -298,15 +298,9 @@ public class Instance {
 
 
     public void readInstanceFileType4(double pt, String instanceName) {
-        customersNr = Integer.parseInt(instanceName.split("-")[0]);
-        satellitesNr = Integer.parseInt(instanceName.split("-")[1]);
-
         this.customers = new ArrayList<Customer>();
         this.satellites = new ArrayList<Satellite>();
         this.depot = new Depot();
-
-        this.totalNodeNr = 1 + satellitesNr + customersNr;
-        this.distanceMatrix = new double[totalNodeNr][totalNodeNr];
 
         this.pt = pt;//0.5;
 
@@ -364,6 +358,7 @@ public class Instance {
             }
 
 
+            this.totalNodeNr = 1 + satellitesNr + customersNr;
             double[][] coodinate = new double[totalNodeNr][2];
             coodinate[0][0] = depot.getXCoordinate();
             coodinate[0][1] = depot.getYCoordinate();
@@ -411,6 +406,101 @@ public class Instance {
             // File not found
             System.out.println("Instance File not found!");
             System.exit(-1);
+        }
+    }
+
+    /**
+     * Reads instances from input/Instances/<filename>.txt
+     * Filename format: Ca<area>-<numDepots>,<numSatellites>,<numCustomers>
+     * File format: N customer rows (x y startTW endTW delivDem puDem),
+     *              then Y satellite rows (x y cap), then X depot rows (x y 0).
+     */
+    public void readInstancesFile(double pt) {
+        String[] dashParts = filename.split("-", 2);
+        String[] commaParts = dashParts[1].split(",");
+        int numDepots = Integer.parseInt(commaParts[0]);
+        int numSatellites = Integer.parseInt(commaParts[1]);
+        int numCustomers = Integer.parseInt(commaParts[2]);
+
+        this.customers = new ArrayList<Customer>();
+        this.satellites = new ArrayList<Satellite>();
+        this.depot = new Depot();
+        this.pt = pt;
+        this.cap1E = 125;
+        this.cap2E = 50;
+        this.customersNr = numCustomers;
+        this.satellitesNr = numSatellites;
+        this.totalNodeNr = 1 + numSatellites + numCustomers;
+
+        int id = 0;
+        depot.setId(id++);
+        depot.setCapacity(cap1E);
+        for (int i = 0; i < numSatellites; i++) {
+            Satellite s = new Satellite();
+            s.setId(id++);
+            s.setCapacity(cap2E);
+            satellites.add(s);
+        }
+
+        try {
+            Scanner in = new Scanner(new FileReader("./input/Instances/" + filename + ".txt"));
+
+            for (int i = 0; i < numCustomers; i++) {
+                String data = in.nextLine().trim();
+                String[] parts = data.split("\\s+");
+                Customer c = new Customer();
+                c.setId(id++);
+                c.xCoordinate = Integer.parseInt(parts[0]);
+                c.yCoordinate = Integer.parseInt(parts[1]);
+                c.startTw = Integer.parseInt(parts[2]);
+                c.endTw = Integer.parseInt(parts[3]);
+                c.delivery.demand = Integer.parseInt(parts[4]);
+                c.pickup.demand = Integer.parseInt(parts[5]);
+                c.delivery.serviceDuration = 10;
+                customers.add(c);
+            }
+
+            for (int i = 0; i < numSatellites; i++) {
+                String data = in.nextLine().trim();
+                String[] parts = data.split("\\s+");
+                satellites.get(i).xCoordinate = Integer.parseInt(parts[0]);
+                satellites.get(i).yCoordinate = Integer.parseInt(parts[1]);
+            }
+
+            String data = in.nextLine().trim();
+            String[] parts = data.split("\\s+");
+            depot.xCoordinate = Integer.parseInt(parts[0]);
+            depot.yCoordinate = Integer.parseInt(parts[1]);
+            for (int i = 1; i < numDepots; i++) {
+                in.nextLine();
+            }
+
+            in.close();
+        } catch (FileNotFoundException e) {
+            System.out.println("Instance File not found: ./input/Instances/" + filename + ".txt");
+            System.exit(-1);
+        }
+
+        double[][] coord = new double[totalNodeNr][2];
+        coord[0][0] = depot.xCoordinate;
+        coord[0][1] = depot.yCoordinate;
+        for (Satellite s : satellites) {
+            coord[s.getId()][0] = s.xCoordinate;
+            coord[s.getId()][1] = s.yCoordinate;
+        }
+        for (Customer c : customers) {
+            coord[c.getId()][0] = c.xCoordinate;
+            coord[c.getId()][1] = c.yCoordinate;
+        }
+
+        this.distanceMatrix = new double[totalNodeNr][totalNodeNr];
+        for (int i = 0; i < totalNodeNr; i++) {
+            for (int j = 0; j < totalNodeNr; j++) {
+                distanceMatrix[i][j] = Math.sqrt(
+                    Math.pow(coord[i][0] - coord[j][0], 2) +
+                    Math.pow(coord[i][1] - coord[j][1], 2)
+                );
+            }
         }
     }
 

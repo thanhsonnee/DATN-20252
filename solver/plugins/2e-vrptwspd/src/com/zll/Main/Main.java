@@ -24,7 +24,12 @@ class Main {
         Parameters para = new Parameters(instanceName, seed);
 
         Instance instance = new Instance(para);
-        instance.readInstanceFileType4(0.5, instanceName);
+        java.io.File instancesFile = new java.io.File("./input/Instances/" + instanceName + ".txt");
+        if (instancesFile.exists()) {
+            instance.readInstancesFile(0.5);
+        } else {
+            instance.readInstanceFileType4(0.5, instanceName);
+        }
 //        instance.readInstanceFileType2();
 
         Duration duration = new Duration();

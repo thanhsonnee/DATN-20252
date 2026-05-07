@@ -48,6 +48,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+../instances/ropke-cordeau-dataset/
+../instances/sartori-dataset/n1000/n1000/ber-n1000-1.txt
+
 # Logs and temporary files
 *.log
 *.tmp
